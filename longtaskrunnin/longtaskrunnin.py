@@ -3,6 +3,8 @@ from multiprocessing import Process
 import shelve
 from pathlib import Path
 from dataclasses import dataclass
+from enum import Enum, auto
+from typing import Union
 
 import appdirs
 from PyQt5.Qt import pyqtSignal, QThread
@@ -11,9 +13,19 @@ from PyQt5.QtWidgets import QMainWindow, QFrame, QVBoxLayout, QLineEdit
 from longtaskrunnin import application_name, author
 
 
+class ReturnTechnique(Enum):
+    use_pyqtsignal = auto()
+    use_shelve = auto()
+
+
+use_qthread = True
+use_process = True
+return_technique = ReturnTechnique.use_shelve
+
+
 @dataclass
 class EInfo:
-    e: float = 0.0
+    e_value: float = 0.0
     duration: float = 0.0
     iterations: int = 1
 
@@ -24,9 +36,10 @@ def get_shelf_file_path() -> str:
     return str(Path(d, application_name))
 
 
-class WasteSomeTime(Process):
+class LongTaskWorkerProcess(Process):
 
-    def __init__(self, requested_duration: float = 5.0):
+    def __init__(self, long_task_signal: Union[pyqtSignal, None] = None, requested_duration: float = 5.0):
+        self.long_task_signal = long_task_signal
         self.requested_duration = requested_duration
         self.e_info = EInfo()
         super().__init__()
@@ -39,14 +52,19 @@ class WasteSomeTime(Process):
         start_time = time.time()
         k = 1.0
         while time.time() - start_time < self.requested_duration:
-            self.e_info.e += 1.0/k
+            self.e_info.e_value += 1.0 / k
             k *= self.e_info.iterations
             self.e_info.iterations += 1
             self.e_info.duration = time.time() - start_time
 
-        # "write back" the result via a shelf
-        with shelve.open(get_shelf_file_path()) as shelf:
-            shelf["e"] = self.e_info
+        if return_technique.use_shelve:
+            # "write back" the result via a shelf
+            with shelve.open(get_shelf_file_path()) as shelf:
+                shelf["e"] = self.e_info
+            if self.long_task_signal is not None:
+                self.long_task_signal.emit()  # merely signal "done"
+        else:
+            self.long_task_signal.emit(self.e_info)  # pass result back via the signal
 
 
 class LongTaskWorkerThread(QThread):
@@ -56,7 +74,7 @@ class LongTaskWorkerThread(QThread):
         super().__init__()
 
     def run(self):
-        waste_some_time = WasteSomeTime()
+        waste_some_time = LongTaskWorkerProcess()
         waste_some_time.start()
         waste_some_time.join()
         self.long_task_signal.emit()  # tell main thread to update its display
@@ -68,6 +86,7 @@ class LongTaskRunnin(QMainWindow):
     def __init__(self):
         super().__init__()
 
+        # set up the visual elements
         self.frame = QFrame()
         self.setCentralWidget(self.frame)
         layout = QVBoxLayout()
@@ -80,19 +99,34 @@ class LongTaskRunnin(QMainWindow):
         self.frame.setLayout(layout)
         self.show()
 
-        self.long_task_signal.connect(self.display_e)
-        self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
-        self.long_task_worker_thread.start()
+        if use_qthread:
+            if use_process:
+                # QThread and Process
+                self.long_task_signal.connect(self.display_e)
+                self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
+                self.long_task_worker_thread.start()
+            else:
+                # QThread only
+                pass
+        elif use_process:
+            # Process only
+            self.long_task_worker_process = LongTaskWorkerProcess(self.long_task_signal)
+            self.long_task_worker_process.start()
+        else:
+            # neither QThread nor Process - nothing to do
+            assert RuntimeError(f"{use_qthread=},{use_process}")
 
     def display_e(self):
-        try:
-            with shelve.open(get_shelf_file_path()) as shelf:
-                e = shelf.get("e", EInfo())
+        if return_technique.use_shelve:
+            try:
+                with shelve.open(get_shelf_file_path()) as shelf:
+                    if (e_info := shelf.get("e")) is not None:
+                        self.display_e_info(e_info)
+                    shelf.close()
+            except (FileNotFoundError, PermissionError):
+                pass
 
-                self.duration_display.setText(str(e.duration))
-                self.e_display.setText(str(e.e))
-                self.iterations_display.setText(str(e.iterations))
-
-                shelf.close()
-        except (FileNotFoundError, PermissionError):
-            pass
+    def display_e_info(self, e_info: EInfo):
+        self.duration_display.setText(str(e_info.duration))
+        self.e_display.setText(str(e_info.e_value))
+        self.iterations_display.setText(str(e_info.iterations))
