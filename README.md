@@ -29,7 +29,7 @@ assumed to be undesirable and/or out of scope for the application.
 
 ### Can't use process only (no QThread)
 
-It isn't possible to pass in a pyqtSignal to `multiprocessing.Process`. You will get:
+It isn't possible to pass in a pyqtSignal to `multiprocessing.Process` since it's not pickle-able. You will get:
 
 `TypeError: cannot pickle 'PyQt5.QtCore.pyqtBoundSignal' object`.
 
