@@ -59,7 +59,7 @@ class LongTaskWorkerThread(QThread):
     def __init__(self, long_task_signal: pyqtSignal):
         self._long_task_signal = long_task_signal
         self._e_info_interprocess_communication = EInfoInterprocessCommunication()
-        self.e_info = None
+        self.e_info = None  # will be written once we have a result
         super().__init__()
 
     def run(self):
@@ -68,23 +68,17 @@ class LongTaskWorkerThread(QThread):
             long_task_worker_process.start()
             long_task_worker_process.join()
         else:
-            long_task_worker_process.run()  # just use LongTaskWorkerProcess() as a (blocking) function
+            # Just use LongTaskWorkerProcess() as a (blocking) function. This works, but if there's an error this app just crashes with
+            # a `Process finished with exit code -1073740791 (0xC0000409)` instead of a proper Python error message.
+            long_task_worker_process.run()
 
-        self._long_task_signal.emit()  # tell main thread to update its display (data returned via shelf)
-
-    def read(self) -> EInfo:
-        """
-        Get data from the worker.
-        :return: EInfo data
-        """
-        if self.e_info is None:
-            self.e_info = self._e_info_interprocess_communication.read()  # only works for one call to facilitate cleanup
-        return self.e_info
+        self.e_info = self._e_info_interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
+        self._long_task_signal.emit(self.e_info)  # tell main thread to update its display
 
 
 class LongTaskRunnin(QMainWindow):
 
-    long_task_signal = pyqtSignal()  # signal merely tells the UI to update - the actual values are passed via shelf
+    long_task_signal = pyqtSignal(EInfo)
 
     def __init__(self):
         super().__init__()
@@ -115,11 +109,10 @@ class LongTaskRunnin(QMainWindow):
         self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
         self.long_task_worker_thread.start()
 
-    def display_e_info(self):
+    def display_e_info(self, e_info: EInfo):
         """
         Display the calculated "e" values
         """
-        e_info = self.long_task_worker_thread.read()
         self.duration_display.setText(str(e_info.duration))
         self.e_display.setText(str(e_info.e_value))
         self.iterations_display.setText(str(e_info.iterations))
