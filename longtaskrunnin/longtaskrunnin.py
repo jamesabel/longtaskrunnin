@@ -59,7 +59,6 @@ class LongTaskWorkerThread(QThread):
     def __init__(self, long_task_signal: pyqtSignal):
         self._long_task_signal = long_task_signal
         self._e_info_interprocess_communication = EInfoInterprocessCommunication()
-        self.e_info = None  # will be written once we have a result
         super().__init__()
 
     def run(self):
@@ -72,8 +71,8 @@ class LongTaskWorkerThread(QThread):
             # a `Process finished with exit code -1073740791 (0xC0000409)` instead of a proper Python error message.
             long_task_worker_process.run()
 
-        self.e_info = self._e_info_interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
-        self._long_task_signal.emit(self.e_info)  # tell main thread to update its display
+        e_info = self._e_info_interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
+        self._long_task_signal.emit(e_info)  # tell main thread to update its display
 
 
 class LongTaskRunnin(QMainWindow):
