@@ -12,6 +12,16 @@
 > 
 > Long Train Runnin' - The Doobie Brothers © Warner Chappell Music, Inc
 
+## tl;dr
+
+Use `QThread`, `Process` and `shelve` to facilitate long-running tasks:
+
+`app -> QThread -> multiprocessing.Process -> shelve -> back to QThread -> back to app`
+
+Try the demo app here as:
+
+`python -m longtaskrunnin`
+
 ## Discussion
 
 The goal is to run a "long-running" task in PyQt without causing the UI to become unresponsive.
