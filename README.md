@@ -1,5 +1,17 @@
 # longtaskrunnin
 
+> *When the big train run*
+> 
+> *When the train is movin' on, I got to keep on movin'*
+> 
+> *Keep on movin'*
+> 
+> *Won't you keep on movin'?*
+> 
+> *Gonna keep on movin'*
+> 
+> Long Train Runnin' - The Doobie Brothers © Warner Chappell Music, Inc
+
 ## Discussion
 
 The goal is to run a "long-running" task in PyQt without causing the UI to become unresponsive.
@@ -57,19 +69,3 @@ system).
 
 pyqtSignal can pass back an arbitrary data structure, e.g., an instance of a class. It doesn't have to be a 
 built-in data type.
-
-### Test Case
-
-Variants:
-
-| Process | Error | Debugger  | Result |
-| ------- |-------|-----------|--------|
-| False   | False | No Effect | OK     |
-| True    | False | No Effect | OK     |
-| False   | True  | False     | Process finished with exit code -1073740791 (0xC0000409) |
-| False   | True  | True      | ZeroDivisionError: float division by zero |
-| True    | True  | No Effect | ZeroDivisionError: float division by zero |
-
-*Process error:
-Normal run: 
-Debugger: 
