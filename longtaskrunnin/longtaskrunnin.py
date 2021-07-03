@@ -4,11 +4,10 @@ import shelve
 from pathlib import Path
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Union
 
 import appdirs
 from PyQt5.Qt import pyqtSignal, QThread
-from PyQt5.QtWidgets import QMainWindow, QFrame, QVBoxLayout, QLineEdit
+from PyQt5.QtWidgets import QMainWindow, QFrame, QVBoxLayout, QLineEdit, QLabel, QPushButton
 
 from longtaskrunnin import application_name, author
 
@@ -18,9 +17,15 @@ class ReturnTechnique(Enum):
     use_shelve = auto()
 
 
+# change these to run the various experiments
 use_qthread = True
 use_process = True
+force_error = False
 return_technique = ReturnTechnique.use_shelve
+
+
+def options_str() -> str:
+    return f"{use_qthread=},{use_process=},{force_error=},{return_technique=}"
 
 
 @dataclass
@@ -38,8 +43,7 @@ def get_shelf_file_path() -> str:
 
 class LongTaskWorkerProcess(Process):
 
-    def __init__(self, long_task_signal: Union[pyqtSignal, None] = None, requested_duration: float = 5.0):
-        self.long_task_signal = long_task_signal
+    def __init__(self, requested_duration: float = 5.0):
         self.requested_duration = requested_duration
         self.e_info = EInfo()
         super().__init__()
@@ -50,6 +54,10 @@ class LongTaskWorkerProcess(Process):
         (as opposed to, say, a float).
         """
         start_time = time.time()
+
+        if force_error:
+            div_error_value = 1.0/0.0
+
         k = 1.0
         while time.time() - start_time < self.requested_duration:
             self.e_info.e_value += 1.0 / k
@@ -61,10 +69,8 @@ class LongTaskWorkerProcess(Process):
             # "write back" the result via a shelf
             with shelve.open(get_shelf_file_path()) as shelf:
                 shelf["e"] = self.e_info
-            if self.long_task_signal is not None:
-                self.long_task_signal.emit()  # merely signal "done"
-        else:
-            self.long_task_signal.emit(self.e_info)  # pass result back via the signal
+
+        # on exit of this method, the result is in self.e_info
 
 
 class LongTaskWorkerThread(QThread):
@@ -74,9 +80,12 @@ class LongTaskWorkerThread(QThread):
         super().__init__()
 
     def run(self):
-        waste_some_time = LongTaskWorkerProcess()
-        waste_some_time.start()
-        waste_some_time.join()
+        long_task_worker_process = LongTaskWorkerProcess()
+        if use_process:
+            long_task_worker_process.start()
+            long_task_worker_process.join()
+        else:
+            long_task_worker_process.run()  # use LongTaskWorkerProcess() as a function (will block)
         self.long_task_signal.emit()  # tell main thread to update its display
 
 
@@ -88,45 +97,52 @@ class LongTaskRunnin(QMainWindow):
 
         # set up the visual elements
         self.frame = QFrame()
+        self.setWindowTitle(application_name)
         self.setCentralWidget(self.frame)
         layout = QVBoxLayout()
         self.duration_display = QLineEdit("")
         self.e_display = QLineEdit()
         self.iterations_display = QLineEdit()
+        self.ok_button = QPushButton("Click if ran OK")
+        self.ok_button.clicked.connect(self.ran_ok)
+        self.ran_ok_flag = False
+        self.ran_ok_count = 0
+        layout.addWidget(QLabel(f"{use_qthread=}"))
+        layout.addWidget(QLabel(f"{use_process=}"))
+        layout.addWidget(QLabel(f"{force_error=}"))
+        layout.addWidget(QLabel(f"{return_technique=}"))
         layout.addWidget(self.duration_display)
         layout.addWidget(self.e_display)
         layout.addWidget(self.iterations_display)
+        layout.addWidget(self.ok_button)
         self.frame.setLayout(layout)
         self.show()
 
-        if use_qthread:
-            if use_process:
-                # QThread and Process
-                self.long_task_signal.connect(self.display_e)
-                self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
-                self.long_task_worker_thread.start()
-            else:
-                # QThread only
-                pass
-        elif use_process:
-            # Process only
-            self.long_task_worker_process = LongTaskWorkerProcess(self.long_task_signal)
-            self.long_task_worker_process.start()
-        else:
-            # neither QThread nor Process - nothing to do
-            assert RuntimeError(f"{use_qthread=},{use_process}")
-
-    def display_e(self):
+        # QThread (which may use Process)
         if return_technique.use_shelve:
-            try:
-                with shelve.open(get_shelf_file_path()) as shelf:
-                    if (e_info := shelf.get("e")) is not None:
-                        self.display_e_info(e_info)
-                    shelf.close()
-            except (FileNotFoundError, PermissionError):
-                pass
+            self.long_task_signal.connect(self.display_e_via_shelve)
+        else:
+            self.long_task_signal.connect(self.display_e_info)
+        self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
+        self.long_task_worker_thread.start()
+
+    def display_e_via_shelve(self):
+        try:
+            with shelve.open(get_shelf_file_path()) as shelf:
+                if (e_info := shelf.get("e")) is not None:
+                    self.display_e_info(e_info)
+                shelf.close()
+        except (FileNotFoundError, PermissionError):
+            # can happen when shelf is not initialized
+            pass
 
     def display_e_info(self, e_info: EInfo):
         self.duration_display.setText(str(e_info.duration))
         self.e_display.setText(str(e_info.e_value))
         self.iterations_display.setText(str(e_info.iterations))
+
+    def ran_ok(self):
+        # do something to make sure the UI is working
+        self.ran_ok_flag = True
+        self.ok_button.setText(f"You said it ran OK! ({self.ran_ok_count=})")
+        self.ran_ok_count += 1
