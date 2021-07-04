@@ -14,9 +14,9 @@
 
 ## tl;dr
 
-Use `QThread`, `Process` and `shelve` to facilitate long-running tasks:
+Use `QThread`, `Process` and `pickle` to facilitate long-running tasks:
 
-`app -> QThread -> multiprocessing.Process -> shelve -> back to QThread -> back to app`
+`app -> QThread -> multiprocessing.Process -> pickle -> back to QThread -> back to app`
 
 Try the demo app here as:
 
@@ -68,9 +68,9 @@ not what you just ran. Those data members won't have the just-processed data.
 The input to a Process can be anything that can be pickled. However, there is no "return" and (as mentioned above)
 the data elements in a class derived from Process don't actually contain data from the worker.
 
-This implementation has chosen to use `shelf` to deliver the data from the worker back to the consumer code.
+This implementation has chosen to use `pickle` to deliver the data from the worker back to the consumer code.
 It uses a temp directory to write and then read the data. The data is read in the QThread (which does a join
-on the process) and that action deletes the shelf data files. So, even though `shelf` data is rather global
+on the process) and that action deletes the pickle file. So, even though this data is rather global
 in that it lives in the file system, in effect that's not an issue since its in a temp directory and this 
 implementation causes it to be ephemeral (is immediately cleaned up once the data is retrieved from the file
 system).
