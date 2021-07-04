@@ -6,7 +6,7 @@ from multiprocessing import Process
 from PyQt5.Qt import pyqtSignal, QThread
 from PyQt5.QtWidgets import QMainWindow, QFrame, QVBoxLayout, QLineEdit, QLabel, QPushButton
 
-from longtaskrunnin import application_name, EInfo, EInfoInterprocessCommunication
+from longtaskrunnin import application_name, EInfo, InterprocessCommunication
 
 
 # change these to run the various experiments
@@ -25,7 +25,7 @@ class LongTaskWorkerProcess(Process):
     Run the worker as a Process. This also enabled parallelism (that running as a thread would not).
     """
 
-    def __init__(self, interprocess_communication: EInfoInterprocessCommunication, requested_duration: float = 7.0):
+    def __init__(self, interprocess_communication: InterprocessCommunication, requested_duration: float = 7.0):
         self.interprocess_communication = interprocess_communication
         self.requested_duration = requested_duration
         super().__init__()
@@ -48,7 +48,7 @@ class LongTaskWorkerProcess(Process):
             k *= e_info.iterations + 1
             e_info.iterations += 1
             e_info.duration = time.time() - run_start_time
-        self.interprocess_communication.write_e_info(e_info)
+        self.interprocess_communication.write(e_info)
 
 
 class LongTaskWorkerThread(QThread):
@@ -58,7 +58,7 @@ class LongTaskWorkerThread(QThread):
 
     def __init__(self, long_task_signal: pyqtSignal):
         self._long_task_signal = long_task_signal
-        self._e_info_interprocess_communication = EInfoInterprocessCommunication()
+        self._e_info_interprocess_communication = InterprocessCommunication()
         super().__init__()
 
     def run(self):

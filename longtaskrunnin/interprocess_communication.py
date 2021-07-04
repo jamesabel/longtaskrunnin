@@ -5,36 +5,36 @@ from typing import Any
 
 from balsa import get_logger
 
-from longtaskrunnin import application_name, EInfo, rmdir
+from longtaskrunnin import rmdir
 
-log = get_logger(application_name)
+log = get_logger(__name__)
 
 
-class EInfoInterprocessCommunication:
+class InterprocessCommunication:
     """
-    Provide inter-process communication via pickle.
+    Provide generic inter-process communication via pickle. Can be used to return results from a multiprocessing.Process() instance.
     """
     def __init__(self):
         self.interprocess_communication_directory = Path(mkdtemp())
+        self.interprocess_communication_file_path = Path(self.interprocess_communication_directory, "data.pickle")
 
-    def write_e_info(self, data: Any):
-        # "write back" the result
-        with open(self.get_interprocess_communication_file_path(), "wb") as pickle_file:
+    def write(self, data: Any):
+        """
+        write the result
+
+        :param data: data to write, which will be passed to another process
+        """
+        with open(self.interprocess_communication_file_path, "wb") as pickle_file:
             pickle.dump(data, pickle_file)
 
-    def get_interprocess_communication_file_path(self) -> Path:
-        interprocess_communication_file_path = Path(self.interprocess_communication_directory, "data.pickle")
-        log.debug(f"{interprocess_communication_file_path=}")  # when this is called as part of the Process, it will use that process's logger
-        return interprocess_communication_file_path
-
     def read(self) -> Any:
-        # read the data (only works once in order to clean up temp files)
-        interprocess_communication_file_path = self.get_interprocess_communication_file_path()
-        try:
-            with open(interprocess_communication_file_path, "rb") as pickle_file:
-                e_info = pickle.load(pickle_file)
-            rmdir(self.interprocess_communication_directory)  # clean up
-        except (FileNotFoundError, IOError):
-            log.warning(f'"{interprocess_communication_file_path}" not found')
-            e_info = None
-        return e_info
+        """
+        Read the data. Must be called exactly once in order to get the data and clean up temp files.
+
+        :return: data from the .write() call
+        """
+        with open(self.interprocess_communication_file_path, "rb") as pickle_file:
+            data = pickle.load(pickle_file)
+        rmdir(self.interprocess_communication_directory)  # clean up
+
+        return data
