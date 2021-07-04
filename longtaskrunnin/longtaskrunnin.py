@@ -26,8 +26,8 @@ class LongTaskWorkerProcess(Process):
     """
 
     def __init__(self, interprocess_communication: InterprocessCommunication, requested_duration: float = 7.0):
-        self.interprocess_communication = interprocess_communication
-        self.requested_duration = requested_duration
+        self._interprocess_communication = interprocess_communication
+        self._requested_duration = requested_duration
         super().__init__()
 
     def run(self):
@@ -43,12 +43,12 @@ class LongTaskWorkerProcess(Process):
             div_error_value = 1.0/0.0
 
         k = 1.0
-        while time.time() - run_start_time < self.requested_duration:
+        while time.time() - run_start_time < self._requested_duration:
             e_info.e_value += 1.0 / k
             k *= e_info.iterations + 1
             e_info.iterations += 1
             e_info.duration = time.time() - run_start_time
-        self.interprocess_communication.write(e_info)
+        self._interprocess_communication.write(e_info)
 
 
 class LongTaskWorkerThread(QThread):
@@ -58,11 +58,11 @@ class LongTaskWorkerThread(QThread):
 
     def __init__(self, long_task_signal: pyqtSignal):
         self._long_task_signal = long_task_signal
-        self._e_info_interprocess_communication = InterprocessCommunication()
+        self._interprocess_communication = InterprocessCommunication()
         super().__init__()
 
     def run(self):
-        long_task_worker_process = LongTaskWorkerProcess(self._e_info_interprocess_communication)
+        long_task_worker_process = LongTaskWorkerProcess(self._interprocess_communication)
         if use_process:
             long_task_worker_process.start()
             long_task_worker_process.join()
@@ -71,7 +71,7 @@ class LongTaskWorkerThread(QThread):
             # a `Process finished with exit code -1073740791 (0xC0000409)` instead of a proper Python error message.
             long_task_worker_process.run()
 
-        e_info = self._e_info_interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
+        e_info = self._interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
         self._long_task_signal.emit(e_info)  # tell main thread to update its display
 
 
