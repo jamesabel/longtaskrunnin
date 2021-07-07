@@ -30,10 +30,7 @@ In other words, none of the UI processing should block for any significant amoun
 ### Process
 
 The process that is going to be run is assumed to be a Python class or function and runs via `multiprocess.Process`.
-
-`multiprocessing.Process` is chosen over `QProcess` since `QProcess` requires that the process being 
-run is already an executable (not a Python class or function). The added complexity of creating an executable is 
-assumed to be undesirable and/or out of scope for the application.
+An advantage of `Process` over a thread is that it enables parallelism, which using a thread (e.g. `QThread`) does not.
 
 ## Some Observations
 
@@ -62,6 +59,11 @@ won't get a chance to notify the user of this error - the program merely crashes
 Although it seems to be syntactically correct, and it doesn't throw any errors or exceptions, if you 
 try to access the data elements from a class derived from Process the data is from the global instance of a class,
 not what you just ran. Those data members won't have the just-processed data.
+
+### Not using `QProcess`
+`multiprocessing.Process` is chosen over `QProcess` since `QProcess` requires that the process being 
+run is already an executable (not a Python class or function). The added complexity of creating an executable is 
+assumed to be undesirable and/or out of scope for the application.
 
 ### Process communication
 

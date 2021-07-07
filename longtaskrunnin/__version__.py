@@ -1,3 +1,3 @@
 application_name = "longtaskrunnin"
 author = "jamesabel"
-version = "0.0.2"
+version = "0.0.3"
