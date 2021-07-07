@@ -27,14 +27,20 @@ class InterprocessCommunication:
         with open(self.interprocess_communication_file_path, "wb") as pickle_file:
             pickle.dump(data, pickle_file)
 
-    def read(self) -> Any:
-        """
-        Read the data. Must be called exactly once in order to get the data and clean up temp files.
+    def get_interprocess_communication_file_path_str(self) -> str:
+        return str(self.interprocess_communication_file_path)
 
-        :return: data from the .write() call
-        """
-        with open(self.interprocess_communication_file_path, "rb") as pickle_file:
-            data = pickle.load(pickle_file)
-        rmdir(self.interprocess_communication_directory)  # clean up
 
-        return data
+def interprocess_communication_read(interprocess_communication_file_path_str: str) -> Any:
+    """
+    Read the data. Must be called exactly once in order to get the data and clean up temp files.
+
+    :return: data from the .write() call
+    """
+    interprocess_communication_file_path = Path(interprocess_communication_file_path_str)
+    assert interprocess_communication_file_path.exists()
+    assert interprocess_communication_file_path.is_file()
+    with open(interprocess_communication_file_path, "rb") as pickle_file:
+        data = pickle.load(pickle_file)
+    rmdir(interprocess_communication_file_path.parent)  # clean up
+    return data

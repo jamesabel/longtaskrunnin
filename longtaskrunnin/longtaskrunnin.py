@@ -6,7 +6,7 @@ from multiprocessing import Process
 from PyQt5.Qt import pyqtSignal, QThread
 from PyQt5.QtWidgets import QMainWindow, QFrame, QVBoxLayout, QLineEdit, QLabel, QPushButton
 
-from longtaskrunnin import application_name, EInfo, InterprocessCommunication
+from longtaskrunnin import application_name, EInfo, InterprocessCommunication, interprocess_communication_read
 
 
 # change these to run the various experiments
@@ -58,11 +58,11 @@ class LongTaskWorkerThread(QThread):
 
     def __init__(self, long_task_signal: pyqtSignal):
         self._long_task_signal = long_task_signal
-        self._interprocess_communication = InterprocessCommunication()
+        self.interprocess_communication = InterprocessCommunication()
         super().__init__()
 
     def run(self):
-        long_task_worker_process = LongTaskWorkerProcess(self._interprocess_communication)
+        long_task_worker_process = LongTaskWorkerProcess(self.interprocess_communication)
         if use_process:
             long_task_worker_process.start()
             long_task_worker_process.join()
@@ -71,13 +71,12 @@ class LongTaskWorkerThread(QThread):
             # a `Process finished with exit code -1073740791 (0xC0000409)` instead of a proper Python error message.
             long_task_worker_process.run()
 
-        e_info = self._interprocess_communication.read()  # get the worker's result - (only works for one call to facilitate cleanup)
-        self._long_task_signal.emit(e_info)  # tell main thread to update its display
+        self._long_task_signal.emit(self.interprocess_communication.get_interprocess_communication_file_path_str())  # tell main thread to update its display
 
 
 class LongTaskRunnin(QMainWindow):
 
-    long_task_signal = pyqtSignal(EInfo)
+    long_task_file_path_signal = pyqtSignal(str)  # pass file path as a str
 
     def __init__(self):
         super().__init__()
@@ -88,8 +87,13 @@ class LongTaskRunnin(QMainWindow):
         self.setCentralWidget(self.frame)
         layout = QVBoxLayout()
         self.duration_display = QLineEdit("")
+        self.duration_display.setReadOnly(True)
         self.e_display = QLineEdit()
+        self.e_display.setReadOnly(True)
         self.iterations_display = QLineEdit()
+        self.iterations_display.setReadOnly(True)
+        self.interprocess_communications_file_path_display = QLineEdit()
+        self.interprocess_communications_file_path_display.setReadOnly(True)
         self.do_something_interactive_button = QPushButton("Click me")
         self.do_something_interactive_button.clicked.connect(self.interactive_button)
         self.do_something_interactive_button_count = 0
@@ -98,20 +102,23 @@ class LongTaskRunnin(QMainWindow):
         layout.addWidget(self.duration_display)
         layout.addWidget(self.e_display)
         layout.addWidget(self.iterations_display)
+        layout.addWidget(self.interprocess_communications_file_path_display)
         layout.addWidget(self.do_something_interactive_button)
         self.frame.setLayout(layout)
         self.show()
 
-        self.long_task_signal.connect(self.display_e_info)  # when the worker process is finished this will be "signaled"
+        self.long_task_file_path_signal.connect(self.display_e_info)  # when the worker process is finished this will be "signaled"
 
         # start doing the work
-        self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_signal)
+        self.long_task_worker_thread = LongTaskWorkerThread(self.long_task_file_path_signal)
+        self.interprocess_communications_file_path_display.setText(self.long_task_worker_thread.interprocess_communication.get_interprocess_communication_file_path_str())
         self.long_task_worker_thread.start()
 
-    def display_e_info(self, e_info: EInfo):
+    def display_e_info(self, interprocess_communication_file_path_str: str):
         """
         Display the calculated "e" values
         """
+        e_info = interprocess_communication_read(interprocess_communication_file_path_str)
         self.duration_display.setText(str(e_info.duration))
         self.e_display.setText(str(e_info.e_value))
         self.iterations_display.setText(str(e_info.iterations))
