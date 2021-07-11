@@ -40,7 +40,7 @@ class LongTaskWorkerProcess(Process):
         e_info.uuid = str(uuid.uuid4())
 
         if force_error:
-            div_error_value = 1.0/0.0
+            div_error_value = 1.0 / 0.0
 
         k = 1.0
         while time.time() - run_start_time < self._requested_duration:
@@ -132,8 +132,8 @@ class LongTaskRunnin(QMainWindow):
         self.do_something_interactive_button_count += 1
 
     def long_task_runnin_quit(self):
-        self.long_task_worker_thread.wait()
+        self.long_task_worker_thread.wait()  # make sure the worker thread is done
         self.close()
 
-    def dft_is_closed(self):
+    def long_task_runnin_is_closed(self):
         assert not self.isVisible()  # for pytest-qt
