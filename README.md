@@ -62,8 +62,8 @@ not what you just ran. Those data members won't have the just-processed data.
 
 ### Not using `QProcess`
 `multiprocessing.Process` is chosen over `QProcess` since `QProcess` requires that the process being 
-run is already an executable (not a Python class or function). The added complexity of creating an executable is 
-assumed to be undesirable and/or out of scope for the application.
+run is already an executable (not a Python class or function, e.g. a .exe on Windows). The added complexity of 
+creating an executable is assumed to be undesirable and/or out of scope for the application.
 
 ### Process communication
 
@@ -77,3 +77,11 @@ in that it lives in the file system, in effect that's not an issue since its in 
 implementation causes it to be ephemeral (is immediately cleaned up once the data is retrieved from the file
 system).
 
+### Leaking threads from QThread
+
+Apparently QThreads can create "Dummy" threads (e.g. Dummy-6, etc.) that are daemons and will continue after the 
+PyQt window has closed.  I have had problems with getting pytest to finish, since pytest stops after the tests that use PyQt.
+This seems to be intermittent, and can be different when running pytest in PyCharm normally, in PyCharm in debug, and 
+pytest directly outside of PyCharm. I do not currently have a solution.
+
+I'm using pytest-qt which helps manage the PyQt runtime environment during tests (e.g. the Qt "app"). 
