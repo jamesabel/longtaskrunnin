@@ -34,7 +34,7 @@ An advantage of `Process` over a thread is that it enables parallelism, which us
 
 ## Some Observations
 
-### Can't use process only (no QThread)
+### Can't use process only (no `QThread`)
 
 It isn't possible to pass in a pyqtSignal to `multiprocessing.Process` since it's not pickle-able. You will get:
 
@@ -42,7 +42,7 @@ It isn't possible to pass in a pyqtSignal to `multiprocessing.Process` since it'
 
 So, Process by itself (no QThread) can't be used to tell the GUI to update when the process is complete.
 
-### An exception in a QThread can cause a "crash"
+### An exception in a `QThread` can cause a "crash"
 
 Since Python is an interpreted language, you'd expect an exception to be caught and then provide some debug
 information. Unfortunately, if an exception happens in a QThread it can cause 
@@ -77,9 +77,9 @@ in that it lives in the file system, in effect that's not an issue since its in 
 implementation causes it to be ephemeral (is immediately cleaned up once the data is retrieved from the file
 system).
 
-### Leaking threads from QThread
+### Leaking threads from `QThread`
 
-Apparently QThreads can create "Dummy" threads (e.g. Dummy-6, etc.) that are daemons and will continue after the 
+Apparently `QThreads can create "Dummy" threads (e.g. Dummy-6, etc.) that are daemons and will continue after the 
 PyQt window has closed.  I have had problems with getting pytest to finish, since pytest stops after the tests that use PyQt.
 This seems to be intermittent, and can be different when running pytest in PyCharm normally, in PyCharm in debug, and 
 pytest directly outside of PyCharm. I do not currently have a solution.
