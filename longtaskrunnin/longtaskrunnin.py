@@ -25,7 +25,7 @@ class LongTaskWorkerProcess(Process):
     Run the worker as a Process. This also enabled parallelism (that running as a thread would not).
     """
 
-    def __init__(self, interprocess_communication: InterprocessCommunication, requested_duration: float = 7.0):
+    def __init__(self, interprocess_communication: InterprocessCommunication, requested_duration: float = 4.0):
         self._interprocess_communication = interprocess_communication
         self._requested_duration = requested_duration
         super().__init__()
@@ -40,7 +40,7 @@ class LongTaskWorkerProcess(Process):
         e_info.uuid = str(uuid.uuid4())
 
         if force_error:
-            div_error_value = 1.0/0.0
+            div_error_value = 1.0 / 0.0
 
         k = 1.0
         while time.time() - run_start_time < self._requested_duration:
@@ -97,6 +97,8 @@ class LongTaskRunnin(QMainWindow):
         self.do_something_interactive_button = QPushButton("Click me")
         self.do_something_interactive_button.clicked.connect(self.interactive_button)
         self.do_something_interactive_button_count = 0
+        self.quit_button = QPushButton("Quit")
+        self.quit_button.clicked.connect(self.long_task_runnin_quit)
         layout.addWidget(QLabel(f"{use_process=}"))
         layout.addWidget(QLabel(f"{force_error=}"))
         layout.addWidget(self.duration_display)
@@ -104,6 +106,7 @@ class LongTaskRunnin(QMainWindow):
         layout.addWidget(self.iterations_display)
         layout.addWidget(self.interprocess_communications_file_path_display)
         layout.addWidget(self.do_something_interactive_button)
+        layout.addWidget(self.quit_button)
         self.frame.setLayout(layout)
         self.show()
 
@@ -127,3 +130,10 @@ class LongTaskRunnin(QMainWindow):
         # do something to make sure the UI is working
         self.do_something_interactive_button.setText(f"I've been clicked! ({self.do_something_interactive_button_count=})")
         self.do_something_interactive_button_count += 1
+
+    def long_task_runnin_quit(self):
+        self.long_task_worker_thread.wait()  # make sure the worker thread is done
+        self.close()
+
+    def long_task_runnin_is_closed(self):
+        assert not self.isVisible()  # for pytest-qt

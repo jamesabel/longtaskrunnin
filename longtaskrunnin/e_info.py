@@ -3,6 +3,7 @@ from dataclasses import dataclass
 
 # these should work identically in our program
 
+
 @dataclass
 class EInfo:
     uuid: str = str(uuid.uuid4())  # this will be the UUID of the "global" instance
