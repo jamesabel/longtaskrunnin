@@ -15,6 +15,7 @@ class InterprocessCommunication:
     """
     Provide generic inter-process communication via pickle. Can be used to return results from a multiprocessing.Process() instance.
     """
+
     def __init__(self):
         self.interprocess_communication_directory = Path(mkdtemp())
         self.interprocess_communication_file_path = Path(self.interprocess_communication_directory, "data.pickle")
