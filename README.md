@@ -71,11 +71,11 @@ The input to a Process can be anything that can be pickled. However, there is no
 the data elements in a class derived from Process don't actually contain data from the worker.
 
 This implementation has chosen to use `pickle` to deliver the data from the worker back to the consumer code.
-It uses a temp directory to write and then read the data. The data is read in `interprocess_communication_read()` 
-and that action deletes the pickle file. So, even though this data is rather global
-in that it lives in the file system, in effect that's not an issue since its in a temp directory and this 
-implementation causes it to be ephemeral (is immediately cleaned up once the data is retrieved from the file
-system).
+See the `InterprocessCommunication` class. It uses a temp directory to write and then read the data. 
+The data is read in `interprocess_communication_read()` and that action deletes the pickle file. 
+So, even though this data is rather global in that it lives in the file system, in effect that's not an 
+issue since its in a temp directory and this implementation causes it to be ephemeral (is immediately 
+cleaned up once the data is retrieved from the file system).
 
 ### Leaking threads from `QThread`
 
