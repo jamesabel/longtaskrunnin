@@ -1,3 +1,7 @@
 PyQt5
 ismain
 balsa
+pytest
+pytest-cov
+pytest-qt
+pytest-threadleak
