@@ -135,5 +135,5 @@ class LongTaskRunnin(QMainWindow):
         self.long_task_worker_thread.wait()
         self.close()
 
-    def dft_is_running(self):
+    def dft_is_closed(self):
         assert not self.isVisible()  # for pytest-qt

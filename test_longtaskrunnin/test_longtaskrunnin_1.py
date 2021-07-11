@@ -10,4 +10,4 @@ def test_longtaskrunnin(qtbot):
     for _ in range(0, 4):
         qtbot.mouseClick(long_task_runnin.do_something_interactive_button, Qt.LeftButton, delay=1 * 1000)
     qtbot.mouseClick(long_task_runnin.quit_button, Qt.LeftButton, delay=1 * 1000)
-    qtbot.waitUntil(long_task_runnin.dft_is_running, timeout=60 * 1000)
+    qtbot.waitUntil(long_task_runnin.dft_is_closed, timeout=60 * 1000)
