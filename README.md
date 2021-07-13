@@ -27,6 +27,12 @@ Try the demo app here as:
 The goal is to run a "long-running" task in PyQt without causing the UI to become unresponsive.
 In other words, none of the UI processing should block for any significant amount of time.
 
+The technique used here is to create a worker class derived from `Process` that is instantiated and started by a `QThread`.
+The `InterprocessCommunication` class facilitates communication between the worker process and the `QThread`. 
+An instance of `InterprocessCommunication` is pickle-able, and is passed to the `Process` instance to provide the
+input. The output result from `Process` is passed back in a pickle in a temporary directory which is deleted upon 
+read (the user is responsible use or save the result when its read).
+
 ### Process
 
 The process that is going to be run is assumed to be a Python class or function and runs via `multiprocess.Process`.
