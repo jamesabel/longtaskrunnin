@@ -79,9 +79,26 @@ cleaned up once the data is retrieved from the file system).
 
 ### Leaking threads from `QThread`
 
-Apparently `QThreads can create "Dummy" threads (e.g. Dummy-6, etc.) that are daemons and will continue after the 
-PyQt window has closed.  I have had problems with getting pytest to finish, since pytest stops after the tests that use PyQt.
-This seems to be intermittent, and can be different when running pytest in PyCharm normally, in PyCharm in debug, and 
-pytest directly outside of PyCharm. I do not currently have a solution.
+Apparently `QThreads` can create "Dummy" threads (e.g. Dummy-6, etc.) that are daemons and will continue after the 
+PyQt window has closed. However, these seem to be benign: these extra threads don't seem to stop pytest from running
+all the tests and I get `Process finished with exit code 0` (i.e. no errors).
 
-I'm using pytest-qt which helps manage the PyQt runtime environment during tests (e.g. the Qt "app"). 
+The leaking threads do seem to cause `pytest-threadleak` to fail however. So `pytest-threadleak` is turned off in `pytest.ini`:
+
+```
+[pytest]
+threadleak = False
+```
+Alternatively just don't use `pytest-threadleak` at all.
+
+### pytest-qt
+
+I'm using pytest-qt which helps manage the PyQt runtime environment during tests (e.g. the Qt "app").  I use 
+`QtBot` which seems convenient and seems to work. See the tests for the example.
+
+### Subclassing `QThread` controversy
+
+There seems to be a lot of controversy around subclassing `QThread` or not. While subclassing `QThread` seems to be
+the easiest way *and it seems to work* (it's what I use in this example), some people claim you have to instantiate 
+a `QThread` and your worker `QObject`, then do a `moveToThread` to move your worker to the `QThread` instance. Also, 
+the communication via signals and slots would have to be managed. This seems like an awkward pattern.
