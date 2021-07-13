@@ -13,5 +13,5 @@ if is_main():
     balsa.init_logger()
 
     application = QApplication(sys.argv)
-    long_task_running = LongTaskRunnin()
+    long_task_runnin = LongTaskRunnin()
     application.exec_()
