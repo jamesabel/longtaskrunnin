@@ -105,9 +105,10 @@ I'm using `pytest-qt` which helps manage the PyQt runtime environment during tes
 ### pytest-qt likes to use (emulated) mouse clicks, but that's about it
 
 Use `qtbot.mouseClick(q_push_button_instance)` to give control stimulus to a PyQt window (e.g. a `QDialog` dialog box). This 
-works well. What doesn't work well is trying to directly send a signal or call a function, even if it's merely what the button 
-is connected to. This can make it impossible to emulate closing a window by clicking the Window's "X" icon. There is no 
-widget that is the "X" to do a mouseClick on. One way to deal with this is to always create a "Close" button (or exit or whatever).
+works well. What doesn't work well is trying to directly send a signal or directly call a function, even if it's merely what 
+the button is connected to. This can make it impossible to emulate closing a window by clicking the Window's built-in 
+"X" icon. There is no widget that is the "X" to do a mouseClick on. One way to deal with this is to always create 
+a "Close" button (or exit or whatever).
 
 You *can* do things like select a tab using `window.setCurrentIndex(tab_number)`, which will expose the tab (and its buttons) so 
 the buttons can be (virtually) "clicked" via `qtbot.mouseClick()`.
