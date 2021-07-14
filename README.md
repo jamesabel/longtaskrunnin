@@ -113,7 +113,7 @@ a "Close" button (or exit or whatever).
 You *can* do things like select a tab using `window.setCurrentIndex(tab_number)`, which will expose the tab (and its buttons) so 
 the buttons can be (virtually) "clicked" via `qtbot.mouseClick()`.
 
-### `qtbot` context manager?
+### `qtbot` as context manager?
 
 I had problems getting the app to close when using `qtbot` as a context manager. The test would hang or get a runtime
 error. I was better off emulating a mouse click on a "close" button and using `waitUntil` on a special method.
