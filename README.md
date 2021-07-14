@@ -99,8 +99,8 @@ Alternatively just don't use `pytest-threadleak` at all.
 
 ### pytest-qt
 
-I'm using pytest-qt which helps manage the PyQt runtime environment during tests (e.g. the Qt "app").  I use 
-`QtBot` which seems convenient and seems to work. See the tests for the example.
+I'm using `pytest-qt` which helps manage the PyQt runtime environment during tests (e.g. the Qt "app").  I use 
+`qtbot` fixture built-in to `pytest-qt`, which seems convenient and seems to work. See the tests for the example.
 
 ### pytest-qt likes to use (emulated) mouse clicks, but that's about it
 
