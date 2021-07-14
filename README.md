@@ -102,6 +102,16 @@ Alternatively just don't use `pytest-threadleak` at all.
 I'm using pytest-qt which helps manage the PyQt runtime environment during tests (e.g. the Qt "app").  I use 
 `QtBot` which seems convenient and seems to work. See the tests for the example.
 
+### pytest-qt likes to use (emulated) mouse clicks, but that's about it
+
+Use `qtbot.mouseClick(q_push_button_instance)` to give control stimulus to a PyQt window (e.g. a `QDialog` dialog box). This 
+works well. What doesn't work well is trying to directly send a signal or call a function, even if it's merely what the button 
+is connected to. This can make it impossible to emulate closing a window by clicking the Window's "X" icon. There is no 
+widget that is the "X" to do a mouseClick on. One way to deal with this is to always create a "Close" button (or exit or whatever).
+
+You *can* do things like select a tab using `window.setCurrentIndex(tab_number)`, which will expose the tab (and its buttons) so 
+the buttons can be (virtually) "clicked" via `qtbot.mouseClick()`.
+
 ### Subclassing `QThread` controversy
 
 There seems to be a lot of controversy around subclassing `QThread` or not. While subclassing `QThread` seems to be
