@@ -25,19 +25,22 @@ def print_leaking_threads() -> bool:
 def tst(qtbot):
     long_task_runnin = LongTaskRunnin()
     qtbot.addWidget(long_task_runnin)
-    with qtbot.waitExposed(long_task_runnin):
-        start_time = time.time()
+
+    def run_it():
         qtbot.mouseClick(long_task_runnin.start_button, Qt.LeftButton)  # start the run
-        log.debug(f"after start click {time.time() - start_time} seconds")
         for _ in range(0, 6):
             time.sleep(1.0)  # mouseClick(delay) seems to take processing resources ... ?
-            log.debug(f"before interactive click {time.time() - start_time} seconds")
             qtbot.mouseClick(long_task_runnin.do_something_interactive_button, Qt.LeftButton)  # some GUI interactivity
-        log.debug(f"before quit click {time.time() - start_time} seconds")
+
+    if False:
+        # The content manager version had intermittent runtime errors. But if I put the mouse clicks and waits in, it can hang.
+        with qtbot.waitExposed(long_task_runnin):
+            run_it()
+    else:
+        # this code path doesn't use a context manager, so click close button and wait for it to work
+        run_it()
         qtbot.mouseClick(long_task_runnin.quit_button, Qt.LeftButton, delay=3 * 1000)  # quit GUI
-        log.debug(f"before waitUntil {time.time() - start_time} seconds")
         qtbot.waitUntil(long_task_runnin.long_task_runnin_is_closed, timeout=60 * 1000)  # wait for GUI to close
-        log.debug(f"after waitUntil {time.time() - start_time} seconds")
 
     print_leaking_threads()
 
