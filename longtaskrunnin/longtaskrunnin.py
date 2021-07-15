@@ -135,9 +135,13 @@ class LongTaskRunnin(QMainWindow):
 
         self.long_task_worker_thread = None
 
-        self.long_task_file_path_signal.connect(self.display_e_info)  # when the worker process is finished this will be "signaled"
+        # when the worker is finished this will be "signaled" with the path of the file that contains the results (as a pickle file).
+        self.long_task_file_path_signal.connect(self.display_e_info)
 
     def check_result(self):
+        """
+        Make sure we've actually done the work. Log an error if apparently never started, and throw an assert if the answer seemed to be computed but was wrong.
+        """
         if self.e is None:
             log.error("Tried to check the result, but the calculation of e has not yet been run.")
         else:
@@ -170,13 +174,14 @@ class LongTaskRunnin(QMainWindow):
     def long_task_runnin_quit(self):
         # quit the app
         if self.long_task_worker_thread is not None:
+            # make sure the worker is done
             log.debug(f"{self.long_task_worker_thread.isRunning()=}")
-            self.long_task_worker_thread.wait()  # make sure the worker thread is done
+            self.long_task_worker_thread.wait()
             log.debug(f"{self.long_task_worker_thread.isRunning()=}")
         self.check_result()
         self.close()
 
-    def long_task_runnin_is_closed(self):
+    def long_task_runnin_is_closed(self) -> bool:
         # for pytest-qt
         assert not self.isVisible()
-
+        return True
