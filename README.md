@@ -115,9 +115,11 @@ the buttons can be (virtually) "clicked" via `qtbot.mouseClick()`.
 
 ### `qtbot` as context manager?
 
-I had problems getting the app to close when using `qtbot` as a context manager. The test would hang or get a runtime
-error. I was better off emulating a mouse click on a "close" button and using `waitUntil` on a special method.
-See the test case.
+I had problems getting the app to close when using `qtbot` as a context manager. The test would intermittently hang or get 
+a runtime error. I was better off emulating a mouse click via an app's "close" button and using `waitUntil` on a special method 
+(in my case `long_task_runnin_is_closed()`) that throws an `assert` while the window is visible. When this special method 
+stops throwing the `assert` as a result of the window becoming invisible, that's the indication that the app is closed. 
+See the test case for the code.
 
 ### Subclassing `QThread` controversy
 
