@@ -10,9 +10,9 @@ log = get_logger(application_name)
 
 if is_main():
 
-    balsa = Balsa(application_name, author, log_directory="log", delete_existing_log_files=True, verbose=True)
+    balsa = Balsa(application_name, author, log_directory="log", delete_existing_log_files=True, verbose=True, gui=True)
     balsa.init_logger()
 
     application = QApplication(sys.argv)
-    long_task_runnin = LongTaskRunnin()
+    long_task_runnin = LongTaskRunnin(balsa.config_as_dict())
     application.exec_()
