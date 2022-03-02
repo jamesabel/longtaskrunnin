@@ -14,7 +14,7 @@
 
 ## tl;dr
 
-Use `QThread`, `Process` and `SimpleQueue` to facilitate long-running tasks:
+Use `QThread`, `Process`, `SimpleQueue`, and [`Balsa`](https://github.com/jamesabel/balsa) to facilitate long-running tasks in PyQt:
 
 `app -> QThread -> multiprocessing.Process -> back to QThread -> back to app`
 
@@ -27,13 +27,21 @@ Try the demo app here as:
 The goal is to run a "long-running" task in PyQt without causing the UI to become unresponsive.
 In other words, none of the UI processing should block for any significant amount of time.
 
-The technique used here is to create a worker class derived from `Process` that is instantiated and started by a `QThread`.
-`SimpleQueue` facilitates communication between the worker process and the `QThread`. 
+The technique used here is to create a worker class derived from `Process` that is instantiated and started 
+(via `Process.start()`) by a `QThread`. `SimpleQueue` facilitates communication from the worker process. 
 
 ### Process
 
 The process that is going to be run is assumed to be a Python class or function and runs via `multiprocess.Process`.
 An advantage of `Process` over a thread is that it enables parallelism, which using a thread (e.g. `QThread`) does not.
+
+### Logging
+
+The way Python works is that a new instance derived from `Process` will have its own logging instantiation 
+and will not inherit from the parent process's logger. The [`Balsa`](https://github.com/jamesabel/balsa) logging 
+package provides a mechanism to export the logging config as a dict (using `config_as_dict()` method). This 
+facilitates creating a new `Balsa` instance in the process's `.run()` method using `Balsa.balsa_clone()` that 
+logs in the same way as the parent logger.
 
 ## Some Observations
 
