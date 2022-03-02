@@ -14,9 +14,9 @@
 
 ## tl;dr
 
-Use `QThread`, `Process` and `pickle` to facilitate long-running tasks:
+Use `QThread`, `Process` and `SimpleQueue` to facilitate long-running tasks:
 
-`app -> QThread -> multiprocessing.Process -> pickle -> back to QThread -> back to app`
+`app -> QThread -> multiprocessing.Process -> back to QThread -> back to app`
 
 Try the demo app here as:
 
@@ -28,10 +28,7 @@ The goal is to run a "long-running" task in PyQt without causing the UI to becom
 In other words, none of the UI processing should block for any significant amount of time.
 
 The technique used here is to create a worker class derived from `Process` that is instantiated and started by a `QThread`.
-The `InterprocessCommunication` class facilitates communication between the worker process and the `QThread`. 
-An instance of `InterprocessCommunication` is pickle-able, and is passed to the `Process` instance to provide the
-input. The output result from `Process` is passed back in a pickle in a temporary directory which is deleted upon 
-read (the user is responsible use or save the result when its read).
+`SimpleQueue` facilitates communication between the worker process and the `QThread`. 
 
 ### Process
 
@@ -74,14 +71,8 @@ creating an executable is assumed to be undesirable and/or out of scope for the 
 ### Process communication
 
 The input to a Process can be anything that can be pickled. However, there is no "return" and (as mentioned above)
-the data elements in a class derived from Process don't actually contain data from the worker.
-
-This implementation has chosen to use `pickle` to deliver the data from the worker back to the consumer code.
-See the `InterprocessCommunication` class. It uses a temp directory to write and then read the data. 
-The data is read in `interprocess_communication_read()` and that action deletes the pickle file. 
-So, even though this data is rather global in that it lives in the file system, in effect that's not an 
-issue since its in a temp directory and this implementation causes it to be ephemeral (is immediately 
-cleaned up once the data is retrieved from the file system).
+the data elements in a class derived from Process don't actually contain data from the worker.  `SimpleQueue` 
+is used to "pass back" the results.
 
 ### Leaking threads from `QThread`
 
