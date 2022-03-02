@@ -32,7 +32,7 @@ The technique used here is to create a worker class derived from `Process` that 
 
 ### Process
 
-The process that is going to be run is assumed to be a Python class or function and runs via `multiprocess.Process`.
+The process that is going to be run is assumed to be a Python class or function and runs via `multiprocessing.Process`.
 An advantage of `Process` over a thread is that it enables parallelism, which using a thread (e.g. `QThread`) does not.
 
 ### Logging
