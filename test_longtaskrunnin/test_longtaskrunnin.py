@@ -5,6 +5,7 @@ from PyQt5.QtCore import Qt
 from balsa import get_logger
 
 from longtaskrunnin import LongTaskRunnin, application_name
+from test_longtaskrunnin import balsa_factory
 
 start_threads = threading.enumerate()
 
@@ -23,7 +24,7 @@ def print_leaking_threads() -> bool:
 
 
 def tst(qtbot):
-    long_task_runnin = LongTaskRunnin()
+    long_task_runnin = LongTaskRunnin(balsa_factory().config_as_dict())
     qtbot.addWidget(long_task_runnin)
 
     def run_it():
@@ -42,7 +43,8 @@ def tst(qtbot):
         qtbot.mouseClick(long_task_runnin.quit_button, Qt.LeftButton, delay=3 * 1000)  # quit GUI
         qtbot.waitUntil(long_task_runnin.long_task_runnin_is_closed, timeout=60 * 1000)  # wait for GUI to close
 
-    print_leaking_threads()
+    if False:
+        print_leaking_threads()
 
 
 # run multiple times to see if we get a thread leak
